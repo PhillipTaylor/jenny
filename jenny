@@ -91,15 +91,13 @@ my $results = GetOptions(
 
 my $operation = $ARGV[0];
 
-given ($operation) {
-    when ('list-jobs') { list_jobs(); }
-    when ('list-builds') { list_builds(); }
-    when ('build-info') { build_info(); }
-    when ('watch') { watch(); }
-    default {
-        print "unrecognised argument\n";
-        usage();
-    }
-};
+# this USED to be a given/when block but became noisy when smartwent went experimental.
+if ($operation eq 'list-jobs') { list_jobs(); return; }
+if ($operation eq 'list-builds') { list_builds(); return; }
+if ($operation eq 'build-info') { build_info(); return; }
+if ($operation eq 'watch') { watch(); return; }
+
+print "unrecognised argument\n";
+usage();
 
 1;
