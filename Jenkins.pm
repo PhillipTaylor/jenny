@@ -56,106 +56,105 @@ has 'cache' => ( is => 'rw', default => sub { {} } );
 
 
 sub list_jobs {
-	my $self = shift;
+    my $self = shift;
 
-	my $jobs_url = $self->server_path . '/api/json/'; # essentially the homepage
+    my $jobs_url = $self->server_path . '/api/json/'; # essentially the homepage
 
-	my $homepage = $self->_fetch_data($jobs_url);
-	
-	my $jobs = $homepage->{'jobs'};
-	
-	# store in cache for later.
-	foreach my $job (@$jobs) {
-		$self->cache->{ $job->{name} } = $job;
-	}
+    my $homepage = $self->_fetch_data($jobs_url);
+    
+    my $jobs = $homepage->{'jobs'};
+    
+    # store in cache for later.
+    foreach my $job (@$jobs) {
+        $self->cache->{ $job->{name} } = $job;
+    }
 
-	return $jobs;
+    return $jobs;
 
 }
 
 =head2 list_builds ($job_name)
 
-	Lists the Jenkin's job on the server.
-	Takes one argument, the job name as a string.
-	returns a ArrayRef of Hashes, one for each build.
-	build contains just number and a url
+    Lists the Jenkin's job on the server.
+    Takes one argument, the job name as a string.
+    returns a ArrayRef of Hashes, one for each build.
+    build contains just number and a url
 
 =cut
 
 sub list_builds {
-	my ($self, $job_name) = @_;
+    my ($self, $job_name) = @_;
 
-	# job info in cache?
-	if (!exists($self->cache->{ $job_name })) {
-		$self->list_jobs();
-	}
+    # job info in cache?
+    if (!exists($self->cache->{ $job_name })) {
+        $self->list_jobs();
+    }
 
-	if (!exists($self->cache->{ $job_name })) {
-		return undef; # job not found
-	}
+    if (!exists($self->cache->{ $job_name })) {
+        return undef; # job not found
+    }
 
-	my $job = $self->cache->{ $job_name };
-	my $data = $self->_fetch_data($job->{'url'} . '/api/json');
+    my $job = $self->cache->{ $job_name };
+    my $data = $self->_fetch_data($job->{'url'} . '/api/json');
 
-	# store it in cache.
-	$self->cache->{ $job_name }->{'builds'} = {};
+    # store it in cache.
+    $self->cache->{ $job_name }->{'builds'} = {};
 
-	my $builds = $data->{'builds'};
-	foreach my $build (@$builds) {
-		$self->cache->{ $job_name }->{'builds'}->{ $build->{'number'} } = $build;
-	};
+    my $builds = $data->{'builds'};
+    foreach my $build (@$builds) {
+        $self->cache->{ $job_name }->{'builds'}->{ $build->{'number'} } = $build;
+    };
 
-	return $data->{'builds'};
+    return $data->{'builds'};
 }
 
 =head2 get_build_information ($job_name, $build_number)
 
-	Returns a hash of information about the build.
-	Use Data::Dump to inspect the returned value.
+    Returns a hash of information about the build.
+    Use Data::Dump to inspect the returned value.
 
 =cut
 
 sub get_build_information {
-	my ($self, $job_name, $build_number) = @_;
+    my ($self, $job_name, $build_number) = @_;
 
-	if (!exists($self->cache->{ $job_name })) {
-		$self->list_jobs();
-	}
+    if (!exists($self->cache->{ $job_name })) {
+        $self->list_jobs();
+    }
 
-	if (!exists($self->cache->{ $job_name })) {
-		return undef;
-	}
-	
-	my $job = $self->cache->{ $job_name };
+    if (!exists($self->cache->{ $job_name })) {
+        return undef;
+    }
 
-	if (!exists($job->{'builds'})) {
-		$self->list_builds($job->{'name'});
-	}
+    my $job = $self->cache->{ $job_name };
 
-	my $build_url = $job->{'builds'}->{ $build_number }->{'url'};
-	my $data = $self->_fetch_data($build_url . '/api/json');
-	
-	return $data;
+    if (!exists($job->{'builds'})) {
+        $self->list_builds($job->{'name'});
+    }
 
+    my $build_url = $job->{'builds'}->{ $build_number }->{'url'};
+    my $data = $self->_fetch_data($build_url . '/api/json');
+
+    return $data;
 }
 
 sub _fetch_data {
-	my ($self, $url) = @_;
+    my ($self, $url) = @_;
 
-	my $raw_data = get($url);
-	my $json_data = decode_json($raw_data);
+    my $raw_data = get($url);
+    my $json_data = decode_json($raw_data);
 
-	return $json_data;
+    return $json_data;
 }
 
 =head1 AUTHOR
 
-	Phillip Taylor <perl@philliptaylor.net>
+    Phillip Taylor <perl@philliptaylor.net>
 
 =head1 LICENSE
 
-	This source code is licensed under the GPL version 3.
-	http://www.gnu.org/licenses/gpl-3.0.html
+    This source code is licensed under the GPL version 3.
+    http://www.gnu.org/licenses/gpl-3.0.html
 
 =cut
 
